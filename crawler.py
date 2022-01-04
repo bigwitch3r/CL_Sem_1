@@ -2,7 +2,7 @@ import requests
 import pymongo
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
-
+import datetime
 
 client = MongoClient('localhost', 27017) # Создаем клиент MongoDB
 db = client['compling'] # Подключаемся к базе данных compling
@@ -19,7 +19,6 @@ soup = BeautifulSoup(response.text, 'lxml')
 # Ищем в выдаче список <ul>, принадлежащий классу bigline, так как именно там
 # содержатся последние новости сайта
 news = soup.find_all('ul', class_='bigline')
-
 # В полученном контейнере перебираем каждый элемент списка <li>, так как это
 # и есть нужные нам новости
 for new in news:
@@ -30,11 +29,18 @@ for li in lis:
     # Название статьи, содержится в теге <a> класса "sys"
     article_name = li.find('a', class_='sys').text
 
-    insterted_name = {
-        "name": article_name
-    }
+    # Ссылку на статью берем из атрибута href тега <a> класса "sys"
+    article_link = li.find('a', class_='sys')
+    link = article_link['href']
 
-    collection.insert_many([insterted_name])
-    print(article_name)
+    pub_date = li.find('span', class_='botinfo').text
+    date = pub_date.split(' ')
 
-# Записываем данные в БД
+    if collection.count_documents({"name": article_name}):
+        print("This article already exists\n")
+    else:
+        insert = {
+            "name": article_name,
+            "link": url + link
+        }
+        collection.insert_many([insert])
