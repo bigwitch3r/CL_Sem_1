@@ -2,6 +2,7 @@ import requests
 import pymongo
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
+from datetime import timedelta
 import datetime
 
 client = MongoClient('localhost', 27017) # Создаем клиент MongoDB
@@ -35,12 +36,35 @@ for li in lis:
 
     pub_date = li.find('span', class_='botinfo').text
     date = pub_date.split(' ')
+    article_date = date[1]
+
+    if article_date == "сегодня":
+        dt = datetime.date.today()
+        normal_date = dt.strftime("%d.%m.%Y")
+        print(normal_date)
+
+    if article_date == "вчера":
+        dt = datetime.date.today() - timedelta(days=1)
+        normal_date = dt.strftime("%d.%m.%Y")
+        print(normal_date)
+
+    # new_link = url + link
+    # article = requests.get(new_link)
+
 
     if collection.count_documents({"name": article_name}):
         print("This article already exists\n")
+        # TODO: Сделать обновление новостей
     else:
         insert = {
             "name": article_name,
-            "link": url + link
+            "date": normal_date,
+            "link": url + link,
+            "text": "",
+            "video": "",
+            "views": "",
+            "comments": "",
+            "contains": "",
+            "tonalty": ""
         }
         collection.insert_many([insert])
